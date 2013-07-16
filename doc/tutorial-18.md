@@ -1,19 +1,18 @@
 # Tutorial 18 - Less is more
 
-In the [previous tutorial][1] we injected the form validators for the
-Shopping Calculator into the corresponding WUI (Web User Interface) in
-such a way that the user will be notified with the corresponding error
-messages when the she/he types in invalid values in the form. Although
-this series of tutorials is mainly dedicated to CLJS, to be respectful
-with the progressive enhancement strategy, we started to inject the
-form validators into the server-side code first.
+In the [previous tutorial][1] we injected the form validators into the
+corresponding WUI (Web User Interface) in such a way that the user
+will be notified with the corresponding error messages when the she/he
+types in invalid values in the form. Although this series of tutorials
+is mainly dedicated to CLJS, to be respectful with the progressive
+enhancement strategy, we started to inject the form validators into
+the server-side code first. 
 
 ## Introduction
 
 In this tutorial we're coming back to the client-side code by
 injecting the form validators into the CLJS code we implemented in the
 [Tutorial 10 - Introducing Ajax ][2].
-
 
 > NOTE 1: I suggest you to keep track of your work by issuing the
 > following commands at the terminal:
