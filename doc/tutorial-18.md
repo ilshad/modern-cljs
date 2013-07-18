@@ -2,11 +2,11 @@
 
 In the [previous tutorial][1] we injected the form validators into the
 corresponding WUI (Web User Interface) in such a way that the user
-will be notified with the corresponding error messages when the she/he
+will be notified with the corresponding error messages when she/he
 types in invalid values in the form. Although this series of tutorials
 is mainly dedicated to CLJS, to be respectful with the progressive
 enhancement strategy, we started to inject the form validators into
-the server-side code first. 
+the server-side code first.
 
 ## Introduction
 
@@ -26,8 +26,8 @@ inject the form validators into the CLJS code we implemented in the
 
 ## CLJS code review
 
-Before to start coding let's review the CLJS code we implemented in
-the [Tutorial 10 - Introducing Ajax][] for the Shopping Calculator.
+Before start coding let's review the CLJS code we implemented in the
+[Tutorial 10 - Introducing Ajax][] for the Shopping Calculator.
 
 ```clj
 ;; src/cljs/modern_cljs/shopping.cljs fragment
@@ -57,24 +57,76 @@ the [Tutorial 10 - Introducing Ajax][] for the Shopping Calculator.
     ...))
 ```
 
-As you see, by using the [Domina][] `listen!` function, we
-attached the CLJS `calculate` function to the `:click` event of the
-`Calculate` submit button (in fact we wrapped the `calculate` function
-inside an anonymous function and passed it the triggered event).
+> NOTE 2: I suggest you to review the [Tutorial 10 - Introducing Ajax][]
+> to better understand the above code and to review the
+> [Tutorial 14 - It's better to be safe than sorry (Part 1)][] to
+> understand the need of the `prevent-default` call at the end of the
+> `calculate` function.
 
-The CLJS `calculate` function, again through [Domina][] lib, first
-gets the stringified values typed in by the user in the form input
-fields, then set the value of the `total` input field by stringifing
-the result of asynchroning calling (i.e. via ajax) the remote CLJ
-`calculate` function.
+As you see, by using the `listen!` function, we attached the CLJS
+`calculate` function to the `:click` event of the `Calculate` submit
+button (in fact we wrapped the `calculate` function inside an
+anonymous function and passed it the triggered event).
+
+The CLJS `calculate` function first gets the stringified values typed
+in by the user in the form input fields, then set the value of the
+`total` input field to the stringified value obtained by calling via
+ajax the remote CLJ `calculate` function.
 
 As we already saw in the [previous tutorial][1] [Tutorial 15][10] the
-user can easly break the Shopping Calculator the which fails if it
-receives invalid arguments as we sae
+user can easly break the Shopping Calculator because it fails with a
+`NullPointerException` when it recevices it invalid values (i.e. not a
+stringified numbers) and we dedicated three tutorials of the series
+not only to fix this issue on the server-side code, but to prepare the
+fix for the clind-side code too.
+
+## Dominate the bug 
+
+The most direct way to fix the above bug in the CLJS code is to use
+the DOM manipulation functions offered by the already included
+[Domina][] lib.
+
+### Step 1 - Inject the form validators
+
+First we have to insert into the CLJS `calculate` definition the call
+to the `validate-shopping-form` portable function and call the remote
+`calculate` callback only when there are no validation errors
+(i.e. `validate-shopping-form` returs `nil`).
+
+```clj
+;; src/cljs/modern_cljs/shopping.cljs excerpt
+
+(ns modern-cljs.shopping
+  (:require-macros [hiccups.core :refer [html]])
+  (:require [domina :refer [by-id value by-class set-value! append! destroy!]]
+            [domina.events :refer [listen! prevent-default]]
+            [hiccups.runtime :as hiccupsrt]
+            [shoreleave.remotes.http-rpc :refer [remote-callback]]
+			;; added form validators namespace
+            [modern-cljs.shopping.validators :refer [validate-shopping-form]]))
+
+(defn calculate [evt]
+  (let [quantity (value (by-id "quantity"))
+        price (value (by-id "price"))
+        tax (value (by-id "tax"))
+        discount (value (by-id "discount"))
+        errors (validate-shopping-form quantity
+                                       price
+                                       tax
+                                       discount)]
+    (if-not errors
+      (remote-callback :calculate
+                       [quantity price tax discount]
+                       #(set-value! (by-id "total") (.toFixed % 2))))
+    (prevent-default evt)))
+```
+
+> NOTE 3: You should start appreciating the advantage of sharing the
+> validators codebase between CLJ and CLJS as illustrated in the
+> [Tutorial 15 - It's better to be safe than sorry (Part 2)][]
 
 
-rebuild and run the modern-cljs project
-to review its behaviour.
+
 
 ```bash
 $ lein clean # clean server-side generated code
